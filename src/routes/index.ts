@@ -213,7 +213,7 @@ export const allRoutes = new Hono();
 import { prismaClient } from "../extras/prisma";
 import jwt from "jsonwebtoken";
 import { jwtSecretKey } from "../../environment";
-import { userRoutes } from "./users-routes";
+import { usersRoutes } from "./users-routes";
 
 
 allRoutes.use(async (context, next) => {
@@ -225,7 +225,7 @@ await next()
 
 
 allRoutes.route("/authentication", authenticationRoutes);
-allRoutes.route("/users",userRoutes)
+allRoutes.route("/users",usersRoutes)
 
 allRoutes.get("/health", 
   async(context, next) => {
