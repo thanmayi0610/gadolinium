@@ -213,29 +213,31 @@ export const allRoutes = new Hono();
 import { prismaClient } from "../extras/prisma";
 import jwt from "jsonwebtoken";
 import { jwtSecretKey } from "../../environment";
+import { userRoutes } from "./users-routes";
+
+
 allRoutes.use(async (context, next) => {
 console.log("HTTP Method ", context.req.method);
 console.log("URL ", context.req.url);
 console.log("Headers ", context.req.header());
 await next()
 });
+
+
 allRoutes.route("/authentication", authenticationRoutes);
-allRoutes.get("/health", async (c) => {
-  console.log("Health checked");  return c.json({ status: "ok" });
+allRoutes.route("/users",userRoutes)
+
+allRoutes.get("/health", 
+  async(context, next) => {
+    console.log("Checking health");
+    next();
+  },
+  async (c) => {
+  console.log("Health checked");  
+  return c.json({ status: "ok" });
 });
-allRoutes.get("/users", async (context, next) => {
-  const token = context.req.header("token");
-  if (!token) {
-    return context.json({ error: "Unauthorized" }, 401);
-  }  try {
-    const verified = jwt.verify(token, jwtSecretKey);
-    await next();
-  } catch (err) {
-    return context.json({ error: "Invalid Token" }, 401);
-  }}, async (c) => {
-  const users = await prismaClient.user.findMany();
-  return c.json(users, 200);
-});
+
+
 
 
 
