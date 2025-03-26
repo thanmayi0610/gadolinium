@@ -1,35 +1,67 @@
 import { Hono } from "hono";
 import { prismaClient } from "../extras/prisma";
 import { tokenMiddleware } from "./middlewares/token-middleware";
+import { getMe } from "../controller/users/users-controller";
+import { GetMeError } from "../controller/users/users-types";
 
 export const usersRoutes = new Hono();
 
 usersRoutes.get("/me", tokenMiddleware, async (context) => {
   const userId = context.get("userId");
 
-  const user = await prismaClient.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
+  try {
+    const user = await getMe({
+      userId,
+    });
 
-  if (user) {
-    return context.json(user, 200);
-  } else {
     return context.json(
       {
-        message: "Missing /me User",
+        data: user,
       },
-      404
+      200
+    );
+  } catch (e) {
+    if (e === GetMeError.BAD_REQUEST) {
+      return context.json(
+        {
+          error: "User not found",
+        },
+        400
+      );
+    }
+
+    return context.json(
+      {
+        message: "Internal Server Error",
+      },
+      500
     );
   }
 });
+
+usersRoutes.get("/all", tokenMiddleware, async (context) => {
+  const users = await prismaClient.user.findMany();
+if (users) {
+  return context.json(users, 200);
+} else {
+  return context.json(
+    {
+      message: "Missing Users",
+    },
+    404
+  );
+}
+});
+
+
+
 
 usersRoutes.get("", tokenMiddleware, async (context) => {
   const users = await prismaClient.user.findMany();
 
   return context.json(users, 200);
 });
+
 // userRoutes.get("/", async (context, next) => {
 //     const token = context.req.header("token");
 //     if (!token) {
